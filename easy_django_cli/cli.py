@@ -99,6 +99,8 @@ def execute_django_command(manage_py_path: Optional[Path] = None) -> int:
     except Exception as e:
         print(f"Error executing django command: {e}", file=sys.stderr)
         return 1
+    except KeyboardInterrupt:
+        return 1
 
 
 def main() -> int:
