@@ -5,7 +5,7 @@ A modern CLI tool that simplifies Django development by replacing `python manage
 [![CI](https://github.com/timonweb/easy-django-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/timonweb/easy-django-cli/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/easy-django-cli.svg)](https://badge.fury.io/py/easy-django-cli)
 [![Python Versions](https://img.shields.io/pypi/pyversions/easy-django-cli.svg)](https://pypi.org/project/easy-django-cli/)
-[![Django Versions](https://img.shields.io/badge/django-3.2%20%7C%204.0%20%7C%204.1%20%7C%204.2%20%7C%205.0-blue.svg)](https://www.djangoproject.com/)
+[![Django Versions](https://img.shields.io/badge/django-4.2%20%7C%205.0%20%7C%205.1%20%7C%205.2%20%7C%206.0-blue.svg)](https://www.djangoproject.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -182,15 +182,15 @@ tox -e lint,type
 
 ## Requirements
 
-- Python 3.8 or higher
-- Django 3.2 or higher
+- Python 3.10 or higher
+- Django 4.2 or higher
 
 ## Compatibility
 
 This package is tested with:
 
-- Python: 3.8, 3.9, 3.10, 3.11, 3.12
-- Django: 3.2, 4.0, 4.1, 4.2, 5.0
+- Python: 3.10, 3.11, 3.12, 3.13, 3.14
+- Django: 4.2, 5.0, 5.1, 5.2, 6.0
 
 ## Contributing
 
@@ -208,7 +208,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-Tim Kamanin - [tim@timonweb.com](mailto:tim@timonweb.com)
+Tim Kamanin - [A Freelance Django and Wagtail Developer](https://timonweb.com)
 
 ## Links
 
