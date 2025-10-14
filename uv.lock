@@ -120,7 +120,7 @@ wheels = [
 
 [[package]]
 name = "easy-django-cli"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "django", version = "4.2.25", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-15-easy-django-cli-django42' or (extra == 'group-15-easy-django-cli-django50' and extra == 'group-15-easy-django-cli-django51') or (extra == 'group-15-easy-django-cli-django50' and extra == 'group-15-easy-django-cli-django52') or (extra == 'group-15-easy-django-cli-django50' and extra == 'group-15-easy-django-cli-django60') or (extra == 'group-15-easy-django-cli-django51' and extra == 'group-15-easy-django-cli-django52') or (extra == 'group-15-easy-django-cli-django51' and extra == 'group-15-easy-django-cli-django60') or (extra == 'group-15-easy-django-cli-django52' and extra == 'group-15-easy-django-cli-django60')" },
