@@ -5,7 +5,7 @@ A modern CLI tool that simplifies Django development by replacing `python manage
 [![CI](https://github.com/timonweb/easy-django-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/timonweb/easy-django-cli/actions/workflows/ci.yml)
 [![PyPI version](https://badge.fury.io/py/easy-django-cli.svg)](https://badge.fury.io/py/easy-django-cli)
 [![Python Versions](https://img.shields.io/pypi/pyversions/easy-django-cli.svg)](https://pypi.org/project/easy-django-cli/)
-[![Django Versions](https://img.shields.io/badge/django-3.2%20%7C%204.0%20%7C%204.1%20%7C%204.2%20%7C%205.0-blue.svg)](https://www.djangoproject.com/)
+[![Django Versions](https://img.shields.io/badge/django-4.2%20%7C%205.0%20%7C%205.1%20%7C%205.2%20%7C%206.0-blue.svg)](https://www.djangoproject.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
