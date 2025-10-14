@@ -182,15 +182,15 @@ tox -e lint,type
 
 ## Requirements
 
-- Python 3.8 or higher
-- Django 3.2 or higher
+- Python 3.10 or higher
+- Django 4.2 or higher
 
 ## Compatibility
 
 This package is tested with:
 
-- Python: 3.8, 3.9, 3.10, 3.11, 3.12
-- Django: 3.2, 4.0, 4.1, 4.2, 5.0
+- Python: 3.10, 3.11, 3.12, 3.13, 3.14
+- Django: 4.2, 5.0, 5.1, 5.2, 6.0
 
 ## Contributing
 
@@ -208,7 +208,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-Tim Kamanin - [tim@timonweb.com](mailto:tim@timonweb.com)
+Tim Kamanin - [A Freelance Django and Wagtail Developer](https://timonweb.com)
 
 ## Links
 
