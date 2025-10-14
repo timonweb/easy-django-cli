@@ -1,0 +1,124 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=77",
+]
+
+[project]
+name = "easy-django-cli"
+version = "0.1.0"
+description = "A modern CLI tool that replaces 'python manage.py' and 'django-admin' with simpler 'django' or 'dj' commands"
+readme = "README.md"
+keywords = [
+    "django",
+    "cli",
+    "command-line",
+    "management",
+    "tools",
+]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Tim Kamanin", email = "tim@timonweb.com" },
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+dependencies = [
+    "django>=4.2"
+]
+urls = { Homepage = "https://github.com/timonweb/easy-django-cli", Repository = "https://github.com/timonweb/easy-django-cli", Issues = "https://github.com/timonweb/easy-django-cli/issues" }
+
+[project.scripts]
+django = "easy_django_cli.cli:main"
+dj = "easy_django_cli.cli:main"
+
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-django"
+]
+django42 = [
+    "django>=4.2,<5",
+]
+django50 = [
+    "django>=5.0,<5.1",
+]
+django51 = [
+    "django>=5.1,<5.2",
+]
+django52 = [
+    "django>=5.2,<6",
+]
+django60 = ["django>=6a1,<6.1; python_version>='3.12'"]
+
+[tool.setuptools.packages.find]
+include = ["easy_django_cli*"]
+
+[tool.pytest.ini_options]
+addopts = """\
+    --strict-config
+    --strict-markers
+    --ds=tests.settings
+    """
+django_find_project = false
+pythonpath = ["."]
+xfail_strict = true
+
+[tool.ruff]
+fix = true
+line-length = 100
+src = ["easy_django_cli", "tests"]
+target-version = "py310"
+
+[tool.ruff.lint]
+extend-select = [
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "DJ", # flake8-django
+    "I", # isort
+    "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "RUF", # Ruff-specific
+    "SIM", # flake8-simplify
+    "UP", # pyupgrade
+]
+extend-ignore = [
+    "E501", # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["easy_django_cli"]
+order-by-type = false
+
+[tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
+
+[tool.uv]
+conflicts = [
+  [
+    { group = "django42" },
+    { group = "django50" },
+    { group = "django51" },
+    { group = "django52" },
+    { group = "django60" },
+  ],
+]

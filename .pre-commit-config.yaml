@@ -1,0 +1,52 @@
+ci:
+  autoupdate_schedule: monthly
+
+default_language_version:
+  python: python3.13
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-json
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-toml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/crate-ci/typos
+  rev: v1.0.3
+  hooks:
+  - id: typos
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: v2.10.0
+  hooks:
+  - id: pyproject-fmt
+- repo: https://github.com/tox-dev/tox-ini-fmt
+  rev: 1.7.0
+  hooks:
+  - id: tox-ini-fmt
+- repo: https://github.com/rstcheck/rstcheck
+  rev: v6.2.5
+  hooks:
+  - id: rstcheck
+    additional_dependencies:
+    - tomli==2.0.1
+- repo: https://github.com/adamchainz/django-upgrade
+  rev: 1.29.0
+  hooks:
+  - id: django-upgrade
+- repo: https://github.com/adamchainz/blacken-docs
+  rev: 1.20.0
+  hooks:
+  - id: blacken-docs
+    additional_dependencies:
+    - black==25.1.0
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.14.0
+  hooks:
+    - id: ruff-check
+      args: [ --fix ]
+    - id: ruff-format
