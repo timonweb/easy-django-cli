@@ -14,7 +14,6 @@ A modern CLI tool that simplifies Django development by replacing `python manage
 - **Smart project detection**: Automatically finds your `manage.py` file
 - **Drop-in replacement**: Works with all Django management commands
 - **Zero configuration**: Just install and use
-- **Fast**: No overhead compared to traditional Django commands
 
 ## Installation
 
@@ -68,7 +67,7 @@ dj shell
 
 `easy-django-cli` automatically:
 
-1. Searches for `manage.py` in the current directory and up to 5 parent directories
+1. Searches for `manage.py` in the current directory
 2. If found, executes commands through your project's `manage.py`
 3. If not found, falls back to `django-admin` for project creation and other admin commands
 
