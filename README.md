@@ -14,7 +14,6 @@ A modern CLI tool that simplifies Django development by replacing `python manage
 - **Smart project detection**: Automatically finds your `manage.py` file
 - **Drop-in replacement**: Works with all Django management commands
 - **Zero configuration**: Just install and use
-- **Fast**: No overhead compared to traditional Django commands
 
 ## Installation
 
@@ -68,7 +67,7 @@ dj shell
 
 `easy-django-cli` automatically:
 
-1. Searches for `manage.py` in the current directory and up to 5 parent directories
+1. Searches for `manage.py` in the current directory
 2. If found, executes commands through your project's `manage.py`
 3. If not found, falls back to `django-admin` for project creation and other admin commands
 
@@ -113,71 +112,12 @@ django test
 
 ```bash
 django shell
-# or use IPython/bpython if installed
-django shell -i ipython
 ```
 
 ### Collect static files
 
 ```bash
 django collectstatic --noinput
-```
-
-## Development
-
-### Setting up development environment
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/timonweb/easy-django-cli.git
-cd easy-django-cli
-```
-
-2. Install dependencies using uv:
-
-```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e ".[dev]"
-```
-
-3. Install pre-commit hooks:
-
-```bash
-pre-commit install
-```
-
-### Running tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=easy_django_cli --cov-report=html
-
-# Run specific test file
-pytest tests/test_cli.py
-
-# Run with tox (multiple Python/Django versions)
-tox
-```
-
-### Code quality
-
-```bash
-# Run linting
-ruff check easy_django_cli tests
-
-# Run formatting
-ruff format easy_django_cli tests
-
-# Run type checking
-mypy easy_django_cli
-
-# Run all checks with tox
-tox -e lint,type
 ```
 
 ## Requirements
