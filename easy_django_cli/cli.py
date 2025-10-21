@@ -1,69 +1,53 @@
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
 
+# Directories to skip when searching for manage.py to improve performance
+SKIP_DIRS = frozenset([
+    "venv", "virtualenv",  # Virtual environments
+    "__pycache__",  # Python cache
+    "node_modules",  # JavaScript dependencies
+    "static", "build", "dist",  # Build artifacts
+])
 
-def find_manage_py(start_path: Optional[Path] = None) -> Optional[Path]:
+
+def run_manage_py_command(manage_py_path: Path, args: list[str]) -> int:
     """
-    Search for manage.py in the current directory and parent directories.
+    Execute a Django management command using the project's manage.py script.
+
+    Runs manage.py as a subprocess using the current Python interpreter,
+    passing through all command-line arguments.
 
     Args:
-        start_path: Directory to start searching from (defaults to current directory)
+        manage_py_path: Absolute path to the Django project's manage.py file
+        args: Command-line arguments to pass to manage.py (e.g., ['runserver', '8000'])
 
     Returns:
-        Path to manage.py if found, None otherwise
-    """
-    if start_path is None:
-        start_path = Path.cwd()
-
-    current = start_path.resolve()
-
-    # Search up
-    while True:
-        manage_py = current / "manage.py"
-        if manage_py.exists() and manage_py.is_file():
-            return manage_py
-
-        # Move to parent directory
-        parent = current.parent
-        if parent == current:
-            # Reached the root directory
-            break
-        current = parent
-
-    return None
-
-
-def run_manage_py_command(manage_py_path: Path, args: list) -> int:
-    """
-    Run a Django management command using manage.py.
-
-    Args:
-        manage_py_path: Path to manage.py
-        args: List of command-line arguments
-
-    Returns:
-        Exit code from the command
+        Exit code from the subprocess (0 for success, non-zero for errors)
     """
     command = [sys.executable, str(manage_py_path)] + args
     result = subprocess.run(command)
     return result.returncode
 
 
-def run_django_admin_command(args: list) -> int:
+def run_django_admin_command(args: list[str]) -> int:
     """
-    Run a Django management command using django-admin.
+    Execute a Django management command using django-admin (fallback when manage.py not found).
+
+    Imports Django's management module directly and executes commands in-process.
+    This is useful when working with Django packages without a project structure.
 
     Args:
-        args: List of command-line arguments
+        args: Command-line arguments for django-admin (e.g., ['startproject', 'mysite'])
 
     Returns:
-        Exit code from the command
+        Exit code (0 for success, 1 for errors)
     """
-    # Fall back to django-admin
     from django.core.management import execute_from_command_line
-    # Update sys.argv for django-admin style execution
+
+    # Set up sys.argv for django-admin execution
     sys.argv = ["django-admin"] + args
     execute_from_command_line(sys.argv)
     return 0
@@ -71,15 +55,21 @@ def run_django_admin_command(args: list) -> int:
 
 def execute_django_command(manage_py_path: Optional[Path] = None) -> int:
     """
-    Execute Django management command.
+    Route Django command execution to either manage.py or django-admin.
+
+    Determines the appropriate execution method based on whether manage.py
+    was found. Handles all exceptions gracefully and returns appropriate
+    exit codes.
 
     Args:
-        manage_py_path: Path to manage.py if found
+        manage_py_path: Path to manage.py if found, None to use django-admin fallback
 
     Returns:
-        Exit code from the Django command
+        Exit code: 0 for success, 1 for errors
+
+    Raises:
+        No exceptions are raised; all errors are caught and converted to exit codes
     """
-    # Remove the script name from argv, keep only the arguments
     args = sys.argv[1:]
 
     try:
@@ -88,6 +78,7 @@ def execute_django_command(manage_py_path: Optional[Path] = None) -> int:
         else:
             return run_django_admin_command(args)
     except SystemExit as e:
+        # Django commands may call sys.exit(); capture and return the code
         return e.code if isinstance(e.code, int) else 1
     except ImportError:
         print(
@@ -100,20 +91,113 @@ def execute_django_command(manage_py_path: Optional[Path] = None) -> int:
         print(f"Error executing django command: {e}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
+        # User interrupted the command (Ctrl+C)
         return 1
+
+
+def _find_files_scan_dir(
+    directory: Path | str,
+    filename: str,
+    skip_dirs: frozenset[str]
+) -> Optional[str]:
+    """
+    Recursively scan a directory tree for a specific filename.
+
+    Uses os.scandir for efficient directory traversal. Returns on first match
+    to optimize performance. Skips hidden directories (starting with '.') and
+    directories specified in skip_dirs to avoid searching irrelevant paths.
+
+    Args:
+        directory: Root directory path to start searching from
+        filename: Name of the file to find (exact match)
+        skip_dirs: Set of directory names to skip during traversal
+
+    Returns:
+        Absolute path to the first matching file, or None if not found
+    """
+    try:
+        with os.scandir(directory) as it:
+            # Collect subdirectories to search after checking current level
+            dirs_to_search = []
+
+            for entry in it:
+                # Check if this is the file we're looking for
+                if entry.is_file(follow_symlinks=False) and entry.name == filename:
+                    return entry.path
+
+                # Collect subdirectories, skipping hidden and excluded dirs
+                elif entry.is_dir(follow_symlinks=False):
+                    # Skip hidden directories (except current dir) and excluded directories
+                    if entry.name.startswith('.') or entry.name in skip_dirs:
+                        continue
+                    dirs_to_search.append(entry.path)
+
+            # Recursively search collected subdirectories
+            for dir_path in dirs_to_search:
+                if result := _find_files_scan_dir(dir_path, filename, skip_dirs):
+                    return result
+
+    except PermissionError:
+        # Skip directories without read permission (common in system directories)
+        pass
+
+    return None
+
+
+def find_manage_py(start_path: Optional[Path] = None) -> Optional[Path]:
+    """
+    Locate Django's manage.py file by recursively searching upward through parent directories.
+
+    The search starts from the specified directory (or current working directory) and
+    moves upward through parent directories, performing a recursive scan of each level's
+    subdirectories. This approach finds manage.py even if it's in a sibling directory
+    or nested subdirectory relative to the starting point.
+
+    Args:
+        start_path: Directory to start searching from (defaults to current directory)
+
+    Returns:
+        Path object pointing to manage.py if found, None otherwise
+    """
+    if start_path is None:
+        start_path = Path.cwd()
+
+    current = start_path.resolve()
+    search_current = current
+
+    # Search upward through directory hierarchy
+    while True:
+        # Recursively search current level and all subdirectories
+        if manage_py_str := _find_files_scan_dir(
+            search_current, "manage.py", SKIP_DIRS
+        ):
+            return Path(manage_py_str)
+
+        # Move to parent directory
+        parent = search_current.parent
+        if parent == search_current:
+            # Reached filesystem root without finding manage.py
+            break
+
+        search_current = parent
+
+    return None
 
 
 def main() -> int:
     """
-    Main entry point for the CLI.
+    Main entry point for the easy-django CLI tool.
+
+    Searches for a Django project's manage.py file and executes the requested
+    Django management command. Falls back to django-admin if manage.py is not found.
 
     Returns:
-        Exit code
+        Exit code: 0 for success, non-zero for errors
     """
-    # Find manage.py in current or parent directories
+    # Locate manage.py by searching current directory and parents
     manage_py = find_manage_py()
 
-    # Execute the Django command
+    # Execute the Django command with the appropriate method
     return execute_django_command(manage_py)
 
 
