@@ -183,6 +183,10 @@ def find_manage_py() -> Optional[Path]:
             # We've searched this git repo and didn't find manage.py
             break
 
+        if (search_current / "pyproject.toml").exists():
+            # We've searched this project and didn't find manage.py
+            break
+
         # If we don't have a top level directory, we limit search depth to avoid system-wide search
         if not top_level_dir and level >= TOP_LEVEL_SEARCH_MAX_DEPTH:
             return None
