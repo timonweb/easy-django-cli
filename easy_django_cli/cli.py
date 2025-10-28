@@ -10,7 +10,11 @@ SKIP_DIRS = frozenset([
     "__pycache__",  # Python cache
     "node_modules",  # JavaScript dependencies
     "static", "build", "dist",  # Build artifacts
+    "logs", "log", "tmp",  # Log directories
+    "media"  # Media upload directories
 ])
+
+TOP_LEVEL_SEARCH_MAX_DEPTH = 3  # Max depth to search if no top-level dir is found
 
 
 def run_manage_py_command(manage_py_path: Path, args: list[str]) -> int:
@@ -96,9 +100,9 @@ def execute_django_command(manage_py_path: Optional[Path] = None) -> int:
 
 
 def _find_files_scan_dir(
-    directory: Path | str,
-    filename: str,
-    skip_dirs: frozenset[str]
+        directory: Path | str,
+        filename: str,
+        skip_dirs: frozenset[str]
 ) -> Optional[str]:
     """
     Recursively scan a directory tree for a specific filename.
@@ -137,14 +141,15 @@ def _find_files_scan_dir(
                 if result := _find_files_scan_dir(dir_path, filename, skip_dirs):
                     return result
 
-    except PermissionError:
-        # Skip directories without read permission (common in system directories)
+    except (PermissionError, OSError):
+        # Skip directories without read permission or with other OS-level errors
+        # (common in system directories, special filesystems, etc.)
         pass
 
     return None
 
 
-def find_manage_py(start_path: Optional[Path] = None) -> Optional[Path]:
+def find_manage_py() -> Optional[Path]:
     """
     Locate Django's manage.py file by recursively searching upward through parent directories.
 
@@ -153,25 +158,38 @@ def find_manage_py(start_path: Optional[Path] = None) -> Optional[Path]:
     subdirectories. This approach finds manage.py even if it's in a sibling directory
     or nested subdirectory relative to the starting point.
 
-    Args:
-        start_path: Directory to start searching from (defaults to current directory)
+    The search stops at natural boundaries (git repository root, home directory, or
+    filesystem root) to avoid scanning unrelated projects.
 
     Returns:
         Path object pointing to manage.py if found, None otherwise
     """
-    if start_path is None:
-        start_path = Path.cwd()
-
-    current = start_path.resolve()
+    current = Path.cwd().resolve()
     search_current = current
+    top_level_dir = _get_top_level_directory()
+    level = 0
 
     # Search upward through directory hierarchy
     while True:
         # Recursively search current level and all subdirectories
         if manage_py_str := _find_files_scan_dir(
-            search_current, "manage.py", SKIP_DIRS
+                search_current, "manage.py", SKIP_DIRS
         ):
             return Path(manage_py_str)
+
+        # Stop at natural boundaries to avoid searching unrelated projects
+        # Stop if we find a .git directory (project root marker)
+        if (search_current / ".git").exists():
+            # We've searched this git repo and didn't find manage.py
+            break
+
+        # If we don't have a top level directory, we limit search depth to avoid system-wide search
+        if not top_level_dir and level >= TOP_LEVEL_SEARCH_MAX_DEPTH:
+            return None
+
+        # Stop at top level directory searching system-wide
+        if search_current == top_level_dir:
+            break
 
         # Move to parent directory
         parent = search_current.parent
@@ -180,8 +198,21 @@ def find_manage_py(start_path: Optional[Path] = None) -> Optional[Path]:
             break
 
         search_current = parent
+        level += 1
 
     return None
+
+
+def _get_top_level_directory() -> Optional[Path]:
+    """
+    Determine the top-level directory to limit manage.py search.
+    """
+    try:
+        from django.conf import settings
+        if base_dir := getattr(settings, "BASE_DIR", None):
+            return Path(base_dir).parent.resolve()
+    except Exception:
+        return None
 
 
 def main() -> int:

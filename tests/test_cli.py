@@ -2,7 +2,12 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-from easy_django_cli.cli import execute_django_command, find_manage_py, main
+from easy_django_cli.cli import (
+    _get_top_level_directory,
+    execute_django_command,
+    find_manage_py,
+    main,
+)
 
 
 class TestFindManagePy:
@@ -12,13 +17,20 @@ class TestFindManagePy:
         WHEN: Searching for manage.py in that directory
         THEN: The manage.py file should be found
         """
+        import os
+
         manage_py = temp_dir / "manage.py"
         manage_py.write_text("# manage.py")
 
-        result = find_manage_py(temp_dir)
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_dir)
+            result = find_manage_py()
 
-        assert result is not None
-        assert result.resolve() == manage_py.resolve()
+            assert result is not None
+            assert result.resolve() == manage_py.resolve()
+        finally:
+            os.chdir(original_cwd)
 
     def test_find_manage_py_in_parent_dir(self, temp_dir: Path) -> None:
         """
@@ -26,15 +38,22 @@ class TestFindManagePy:
         WHEN: Searching for manage.py from the subdirectory
         THEN: The manage.py in the parent directory should be found
         """
+        import os
+
         manage_py = temp_dir / "manage.py"
         manage_py.write_text("# manage.py")
         subdir = temp_dir / "subdir"
         subdir.mkdir()
 
-        result = find_manage_py(subdir)
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(subdir)
+            result = find_manage_py()
 
-        assert result is not None
-        assert result.resolve() == manage_py.resolve()
+            assert result is not None
+            assert result.resolve() == manage_py.resolve()
+        finally:
+            os.chdir(original_cwd)
 
     def test_find_manage_py_not_found(self, temp_dir: Path) -> None:
         """
@@ -42,9 +61,16 @@ class TestFindManagePy:
         WHEN: Searching for manage.py in that directory
         THEN: No manage.py should be found
         """
-        result = find_manage_py(temp_dir)
+        import os
 
-        assert result is None
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(temp_dir)
+            result = find_manage_py()
+
+            assert result is None
+        finally:
+            os.chdir(original_cwd)
 
     def test_find_manage_py_max_depth(self, temp_dir: Path) -> None:
         """
@@ -52,15 +78,179 @@ class TestFindManagePy:
         WHEN: Searching for manage.py from the deeply nested directory
         THEN: The manage.py at the root should be found
         """
+        import os
+
         manage_py = temp_dir / "manage.py"
         manage_py.write_text("# manage.py")
-        deep_dir = temp_dir / "a" / "b" / "c" / "d" / "e" / "f"
+        deep_dir = temp_dir / "a" / "b" / "c"
         deep_dir.mkdir(parents=True)
 
-        result = find_manage_py(deep_dir)
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(deep_dir)
+            result = find_manage_py()
 
-        assert result is not None
-        assert result.resolve() == manage_py.resolve()
+            assert result is not None
+            assert result.resolve() == manage_py.resolve()
+        finally:
+            os.chdir(original_cwd)
+
+    def test_find_manage_py_max_depth_fails(self, temp_dir: Path) -> None:
+        """
+        GIVEN: A manage.py beyond the max search depth
+        WHEN: Searching for manage.py from a deeply nested directory
+        THEN: No manage.py should be found
+        """
+        import os
+
+        manage_py = temp_dir / "manage.py"
+        manage_py.write_text("# manage.py")
+        deep_dir = temp_dir / "a" / "b" / "c" / "d"
+        deep_dir.mkdir(parents=True)
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(deep_dir)
+            result = find_manage_py()
+
+            assert result is None
+        finally:
+            os.chdir(original_cwd)
+
+    def test_find_manage_py_stops_at_git_boundary(self, temp_dir: Path) -> None:
+        """
+        GIVEN: A git repository without manage.py and a parent directory with manage.py
+        WHEN: Searching for manage.py from inside the git repo
+        THEN: The search should stop at the git boundary and not find the parent's manage.py
+        """
+        import os
+
+        # Create a manage.py in the parent directory
+        parent_manage_py = temp_dir / "manage.py"
+        parent_manage_py.write_text("# parent manage.py")
+
+        # Create a subdirectory with .git (simulating a git repo)
+        git_repo = temp_dir / "git_repo"
+        git_repo.mkdir()
+        git_dir = git_repo / ".git"
+        git_dir.mkdir()
+
+        # Create a subdirectory inside the git repo
+        subdir = git_repo / "subdir"
+        subdir.mkdir()
+
+        # Change to the subdir and search from there
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(subdir)
+            result = find_manage_py()
+
+            # Should not find the parent's manage.py due to git boundary
+            assert result is None
+        finally:
+            os.chdir(original_cwd)
+
+    def test_find_manage_py_finds_within_git_repo(self, temp_dir: Path) -> None:
+        """
+        GIVEN: A git repository with manage.py inside it
+        WHEN: Searching for manage.py from a subdirectory in the repo
+        THEN: The manage.py inside the git repo should be found
+        """
+        import os
+
+        # Create a git repo directory with .git
+        git_repo = temp_dir / "git_repo"
+        git_repo.mkdir()
+        git_dir = git_repo / ".git"
+        git_dir.mkdir()
+
+        # Create manage.py inside the git repo
+        manage_py = git_repo / "manage.py"
+        manage_py.write_text("# manage.py")
+
+        # Create a subdirectory inside the git repo
+        subdir = git_repo / "subdir"
+        subdir.mkdir()
+
+        # Change to the subdir and search from there
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(subdir)
+            result = find_manage_py()
+
+            # Should find manage.py inside the git repo
+            assert result is not None
+            assert result.resolve() == manage_py.resolve()
+        finally:
+            os.chdir(original_cwd)
+
+
+class TestGetTopLevelDirectory:
+    def test_get_top_level_directory_no_django(self) -> None:
+        """
+        GIVEN: Django is not installed or not configured
+        WHEN: Calling _get_top_level_directory
+        THEN: Should return None without raising exceptions
+        """
+        result = _get_top_level_directory()
+
+        # Should handle missing Django gracefully
+        assert result is None
+
+    def test_get_top_level_directory_with_django_configured(
+        self, temp_dir: Path
+    ) -> None:
+        """
+        GIVEN: Django is configured with BASE_DIR in settings
+        WHEN: Calling _get_top_level_directory
+        THEN: Should return the parent of BASE_DIR
+        """
+        # Create a mock settings module with BASE_DIR
+        base_dir = temp_dir / "project"
+        base_dir.mkdir()
+
+        with patch("django.conf.settings") as mock_settings:
+            mock_settings.BASE_DIR = str(base_dir)
+            result = _get_top_level_directory()
+
+            assert result is not None
+            assert result.resolve() == temp_dir.resolve()
+
+    def test_get_top_level_directory_no_base_dir(self) -> None:
+        """
+        GIVEN: Django is configured but settings has no BASE_DIR
+        WHEN: Calling _get_top_level_directory
+        THEN: Should return None
+        """
+        with patch("django.conf.settings") as mock_settings:
+            # Mock settings without BASE_DIR attribute
+            del mock_settings.BASE_DIR
+            mock_settings.BASE_DIR = None
+
+            result = _get_top_level_directory()
+
+            assert result is None
+
+    def test_get_top_level_directory_handles_improperly_configured(self) -> None:
+        """
+        GIVEN: Django raises ImproperlyConfigured when accessing settings
+        WHEN: Calling _get_top_level_directory
+        THEN: Should return None without raising exceptions
+        """
+        from django.core.exceptions import ImproperlyConfigured
+
+        with patch("django.conf.settings") as mock_settings:
+            # Simulate ImproperlyConfigured error
+            type(mock_settings).BASE_DIR = property(
+                lambda self: (_ for _ in ()).throw(
+                    ImproperlyConfigured("Django is not configured")
+                )
+            )
+
+            result = _get_top_level_directory()
+
+            # Should catch the exception and return None
+            assert result is None
 
 
 class TestExecuteDjangoCommand:
