@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "easy-django-cli"
-version = "0.1.2"
+version = "0.2.0"
 description = "A modern CLI tool that replaces 'python manage.py' and 'django-admin' with simpler 'django' or 'dj' commands"
 readme = "README.md"
 keywords = [
@@ -21,7 +21,7 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Tim Kamanin", email = "tim@timonweb.com" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: Django :: 4.2",

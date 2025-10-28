@@ -1,8 +1,12 @@
 # Changelog
 
+## [0.2.0]
+
+- Improved error handling in directory scanning to gracefully skip problematic system directories
+- Drop support for Python 3.10
+
 ## [0.1.2]
 
-### Changed
 - Updated Development Status to Beta
 - Improved search algorithm with both upward and downward directory traversal
 - Added recursive downward search from each parent directory level
